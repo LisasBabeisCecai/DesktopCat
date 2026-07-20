@@ -12,7 +12,7 @@
 
 ```bash
 # 1. 编译 Release 版本
-cd ~/Documents/零碎兴趣/闲聊/DesktopCat
+cd ~/path/to/DesktopCat   # 替换为你的实际路径
 swift build -c release
 
 # 2. 创建 .app 包结构
@@ -42,7 +42,7 @@ cp /path/to/AppIcon.icns "$APP/Contents/Resources/AppIcon.icns"
     <key>CFBundleDisplayName</key>
     <string>桌面小猫</string>
     <key>CFBundleIdentifier</key>
-    <string>com.cecilia.desktopcat</string>
+    <string>com.yourname.desktopcat</string>   <!-- 改成你自己的 bundle ID -->
     <key>CFBundleVersion</key>
     <string>1.0</string>
     <key>CFBundleShortVersionString</key>
@@ -107,7 +107,7 @@ ffprobe -v error -select_streams v:0 \
 
 **方法二：命令行**
 ```bash
-osascript -e 'tell application "System Events" to make login item at end with properties {path:"/Users/cecilia/Applications/DesktopCat.app", hidden:false}'
+osascript -e 'tell application "System Events" to make login item at end with properties {path:"/Users/你的用户名/Applications/DesktopCat.app", hidden:false}'
 ```
 
 ## 更新流程
@@ -117,7 +117,7 @@ osascript -e 'tell application "System Events" to make login item at end with pr
 
 ```bash
 # 1. 编译 Release 版本
-cd ~/Documents/零碎兴趣/闲聊/DesktopCat
+cd ~/path/to/DesktopCat   # 替换为你的实际路径
 swift build -c release
 
 # 2. 关闭正在运行的实例
