@@ -144,39 +144,81 @@ open ~/Applications/DesktopCat.app
 
 **用 AI 生图工具生成带透明背景的 PNG 序列帧，再用 ffmpeg 合成视频。**
 
-1. **用 AI 生成角色帧**（Midjourney、Stable Diffusion 等）
-   - 提示词示例：`cute cat sitting, transparent background, white background, cartoon style, full body`
-   - 导出为 PNG，确保背景已被移除（透明或纯白均可，纯白需后处理去背）
+1. **用 AI 生成角色底图**（豆包）
+   - 提示词示例：`参考第一张图片，参考这只猫的花色和长相，生成皮克斯风格 3D 渲染的这只猫，全身坐姿，面向镜头，微微歪头，纯白色背景，居中构图，毛发质感细腻，高清`
+![001-生成底图](assets/001-生成底图.jpg)
 
-2. **去除白色背景**（如果 AI 输出是白底）
-   ```bash
-   # 用 ffmpeg 将白色替换为透明
-   ffmpeg -i input.png -vf "colorkey=white:0.1:0.1" output.png
-   ```
 
-3. **将 PNG 序列合成为 ProRes 4444 视频**
-   ```bash
-   ffmpeg -framerate 30 -i frame_%04d.png \
-     -c:v prores_ks -profile:v 4 \
-     -pix_fmt yuva444p10le \
-     output.mov
-   ```
+2. **用 AI 生成角色设定版**（豆包）
+   - 提示词示例：`整张图分成多个带圆角边框的面板，每个面板像摄影棚白底照片：正面坐姿、左侧站姿、右侧站姿、背面坐姿、正面四分之三站姿、背面四分之三站姿、头部特写、尾巴细节、脚垫细节、腹部 / 下侧仰躺视角。每个面板顶部有清晰英文标签：FRONT、LEFT SIDE、RIGHT SIDE、BACK、FRONT 3/4、BACK 3/4、HEAD CLOSE-UP、TAIL DETAIL、PAW PADS、BELLY / UNDERSIDE。整张图分成多个带圆角边框的面板，每个面板像摄影棚白底照片：正面坐姿、左侧站姿、右侧站姿、背面坐姿、正面四分之三站姿、背面四分之三站姿、头部特写、尾巴细节、脚垫细节、腹部 / 下侧仰躺视角。每个面板顶部有清晰英文标签：FRONT、LEFT SIDE、RIGHT SIDE、BACK、FRONT 3/4、BACK 3/4、HEAD CLOSE-UP、TAIL DETAIL、PAW PADS、BELLY / UNDERSIDE。`
+![002-生成角色设定图](assets/002-生成角色设定图.jpg)
 
-4. **验证格式**
+
+3. **用 AI 生成四个动作的原视频**（豆包）
+   - 坐姿提示词示例：`生成视频：使用图片中猫的样子，生成 10 秒的视频；猫保持坐姿基本不动，自然地缓慢眨眼、耳朵偶尔转动、尾巴尖轻轻摆动、身体随呼吸微微起伏。镜头完全固定，猫始终在画面中央，背景保持纯绿色不变，动作幅度小而自然，首尾动作衔接（方便循环播放）`
+
+   - 抚摸提示词示例：`猫先是坐姿，然后眯起眼睛、微微仰头蹭向上方，表情享受舒服，像被主人抚摸下巴，最后回到原来的坐姿。镜头完全固定，背景保持纯绿色不变`
+
+   - 走路提示词示例：`生成视频：一只猫在原地行走，侧面视角，面朝左侧。四肢有节奏地交替迈步抬落，做出行走的动作，但身体保持在画面中央固定位置不发生位移，就像原地踏步一样。尾巴自然摆动，头部平稳，步态放松均匀。镜头完全固定，背景为纯白色，没有空间感，纯白，猫全身完整入画，动作节奏稳定循环，首尾步态衔接`
+ 
+![003-生成动作视频.jpg](assets/DesktopCat/assets/003-生成动作视频.jpg)
+
+4. **扣除背景，导出带透明通道的视频**（Premiere Pro）
+
+   AI 生成的视频通常是绿幕或白底，需要在 PR 里做抠像，导出带 Alpha 通道的 MOV。
+
+   **绿幕/绿底抠像步骤：**
+   - 将视频素材导入 PR，拖到时间线
+   - 选中素材 → 效果面板 → 搜索「超级键」（Ultra Key）→ 拖到素材上
+   - 在效果控件里，「键颜色」用吸管点击画面中的绿色背景
+   - 调整「遮罩生成」中的高光/阴影，让边缘干净
+   - 如果是白底，用「亮度键」或「颜色键」代替超级键
+
+   **导出带 Alpha 通道的 MOV：**
+   - 文件 → 导出 → 媒体
+   - 格式选 **QuickTime**
+   - 视频编解码器选 **Apple ProRes 4444**
+   - 勾选「导出 Alpha 通道」（或确认预设中包含 Alpha）
+   - 输出名称改为对应动作名（`idle.mov` / `walk.mov` / `sit.mov` / `pet.mov`）
+   - 点导出
+
+   **验证导出结果是否带透明通道：**
    ```bash
    ffprobe -v error -select_streams v:0 \
      -show_entries stream=codec_name,pix_fmt \
-     output.mov
-   # 正确输出：codec_name=prores  pix_fmt=yuva444p10le
+     idle.mov
+   # 正确输出：codec_name=prores  pix_fmt=yuva444p10le 或 yuva444p12le
+   # 如果 pix_fmt 不含 a（alpha），说明导出时没勾选透明通道
    ```
 
-5. 将生成的文件重命名为 `idle.mov` / `walk.mov` / `sit.mov` / `pet.mov` 放到皮肤目录。
+5. **将四个视频放到皮肤目录**
+
+   把导出的四个文件重命名并放到指定位置：
+   ```bash
+   mkdir -p ~/Library/Application\ Support/DesktopCat/skin/
+   # 将文件复制进去，确保文件名完全一致
+   cp idle.mov ~/Library/Application\ Support/DesktopCat/skin/
+   cp walk.mov ~/Library/Application\ Support/DesktopCat/skin/
+   cp sit.mov  ~/Library/Application\ Support/DesktopCat/skin/
+   cp pet.mov  ~/Library/Application\ Support/DesktopCat/skin/
+   ```
+
+   目录结构应该是：
+   ```
+   ~/Library/Application Support/DesktopCat/skin/
+   ├── idle.mov    ✅
+   ├── walk.mov    ✅
+   ├── sit.mov     ✅
+   └── pet.mov     ✅
+   ```
+
+   放好之后直接运行程序，菜单栏选「重新加载皮肤」即可看到效果。
 
 ### 下载本项目使用的原始素材
 
 本项目使用的高清素材（1080×1080 ProRes 4444，约 1.3GB）已单独上传网盘：
 
-> 🔗 **素材网盘链接**：（cecilia 填入）
+> 🔗 **素材网盘链接**：我用夸克网盘分享了「001-DesktopCat」，点击链接即可保存。打开「夸克APP」，无需下载在线播放视频，畅享原画5倍速，支持电视投屏。链接：https://pan.quark.cn/s/6ddd1afe832c
 
 ---
 
