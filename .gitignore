@@ -1,0 +1,20 @@
+# Swift build artifacts
+.build/
+*.o
+*.d
+
+# Xcode
+*.xcodeproj
+*.xcworkspace
+DerivedData/
+.swiftpm/
+
+# macOS
+.DS_Store
+**/.DS_Store
+
+# 皮肤文件（体积大，单独网盘分发）
+# 只保留 skin_placeholder/ 示例素材
+skin/
+*.mov
+!skin_placeholder/*.mov
